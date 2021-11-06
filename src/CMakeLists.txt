@@ -4,5 +4,5 @@ project(demo)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-add_executable(demo main.cpp Tools.cpp Tools.h)
+add_executable(demo main.cpp Tools.cpp Tools.h Queue.cpp Queue.h)
 target_link_libraries(demo fmt ${WORKFLOW_LIB})
