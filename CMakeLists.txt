@@ -11,14 +11,21 @@ FetchContent_Declare(
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 #set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-#FetchContent_MakeAvailable(googletest)
+FetchContent_MakeAvailable(googletest)
 
-FetchContent_GetProperties(googletest)
-if(NOT googletest_POPULATED)
-    FetchContent_Populate(googletest)
-    #create gt build directory in binary tree
-    add_subdirectory(${googletest_SOURCE_DIR} gt)
-endif()
+# 检查是否已经执行填充
+#FetchContent_GetProperties(<name>)
+#string(TOLOWER "<name>" lcName)
+#if(NOT ${lcName}_POPULATED)
+#    # 使用先前声明的详细信息获取内容
+#    FetchContent_Populate(<name>)
+#
+#    # 设置自定义变量，策略等。
+#    # ...
+#
+#    # 将填充的内容带入构建
+#    add_subdirectory(${${lcName}_SOURCE_DIR} ${${lcName}_BINARY_DIR})
+#endif()
 
 FetchContent_Declare(
         fmt_lib
@@ -48,4 +55,5 @@ add_subdirectory(src)
 
 # 不定义则默认跳过测试，可以使用include(CTest)代替
 enable_testing()
+include_directories(src)
 add_subdirectory(test)
