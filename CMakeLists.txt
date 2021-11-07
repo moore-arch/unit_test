@@ -13,18 +13,17 @@ FetchContent_Declare(
 #set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# 检查是否已经执行填充
-#FetchContent_GetProperties(<name>)
-#string(TOLOWER "<name>" lcName)
-#if(NOT ${lcName}_POPULATED)
-#    # 使用先前声明的详细信息获取内容
-#    FetchContent_Populate(<name>)
+# Check if population has already been performed
+#FetchContent_GetProperties(depname)
+#if(NOT depname_POPULATED)
+#    # Fetch the content using previously declared details
+#    FetchContent_Populate(depname)
 #
-#    # 设置自定义变量，策略等。
+#    # Set custom variables, policies, etc.
 #    # ...
 #
-#    # 将填充的内容带入构建
-#    add_subdirectory(${${lcName}_SOURCE_DIR} ${${lcName}_BINARY_DIR})
+#    # Bring the populated content into the build
+#    add_subdirectory(${depname_SOURCE_DIR} ${depname_BINARY_DIR})
 #endif()
 
 FetchContent_Declare(

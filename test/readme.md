@@ -15,7 +15,7 @@
 - I: 隔离：不同的测试用例之间是隔离的。一个测试不会依赖另一个测试。不同测试的故障是相互隔离的。
 - R: REPEATABLE: - 可重演 测试程序要可在不同环境跑.
 - S: SLEF-VALIDATING: - 自我确认 测试结果应是简单的TRUE/FALSE, 无须人工确认.
-- T: 及时：测试是及时的。程序员在代码上线前，及时地编写它们，以防止bug。
+- T: 及时,测试是及时的。程序员在代码上线前，及时地编写它们，以防止bug。
 
 对于`c++`代码，一个比较好的单元测试框架是`google`开源的`gtest`。`gtest`会独立运行所有的测试用例，并最终统计出未通过的测试用例对应的case以及所在位置。
 同时，`gmock`已经成为`gtest`项目的一部分，遇到有数据依赖或者无法构造出实际环境的case还可以直接使用`gmock`进行模拟。
@@ -29,26 +29,70 @@
 ```cpp
 GTEST_API_ int main(int argc, char **argv) {
     printf("Running main() from gtest_main.cc\n");
+    
+    // 获取 googletest 标志，并删除所有已识别的标志。这允许用户通过各种标志来控制测试程序的行为
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
 ```
 
+### invoking tests
+关于`gtest`的运行机制，事实上`TEST`, `TEST_F`等宏定义已经注册了对应的测试用例，不需要显式列出所有的测试项。使用`RUN_ALL_TESTS`可以运行所有注册过的测试用例，只有当所有测试用例都成功时返回-1。
+
 ## gtest基础
 
 基本使用方式的区别，参考官方文档或者(stackoverflow)[https://stackoverflow.com/questions/58600728/what-is-the-difference-between-test-test-f-and-test-p].
 
+(gtest primer)[https://google.github.io/googletest/primer.html]
+
 
 `TEST()` is useful when you want to write unit tests for static or global functions or simple classes.
+```cpp
+TEST(TestSuiteName, TestName) {
+  ... statements ...
+}
+```
 
-`TEST_F()` is useful when you need access to objects and subroutines in the unit test.
+`TEST_F()` is useful when you need access to objects and subroutines in the unit test.参数不能包含下划线。
+```cpp
+TEST_F(TestFixtureName, TestName) {
+  ... statements ...
+}
+```
 
 `TEST_P()` is useful when you want to write tests with a parameter. Instead of writing multiple tests with different values of the parameter,
 you can write one test using `TEST_P()` which uses `GetParam()` and can be instantiated using `INSTANTIATE_TEST_SUITE_P()`.
+```cpp
+TEST_P(TestFixtureName, TestName) {
+  ... statements ...
+  EXPECT_TRUE(DoSomething(GetParam()));
+}
+```
 
-其中`TEST`的两个参数分别为`test_suite_name`和`test_name`。
 
-`TEST_F(test_fixture,test_name)`，第一个参数必须和待测试类名一致？待确认具体要求。第二个参数用于标识用。
+### simple tests
+`simple tests`可以直接使用`TEST()`宏创建，`GTEST`按照`suite_name`对测试分组，因此相同单元的测试的`suite_name`应当相同。同时创建时要注意`test_suite_name`和`test_name`不能包含下划线。
+
+### test fixtures
+`test fixture`可以避免多次执行相同的操作或者创建相同的数据，创建`test fixture`可以分为以下步骤：
+1. 以`public`方式继承`::testing::Test`类，同时类内成员应当声明为`protected`，以便于访问其中的成员变量。
+2. 声明需要创建的数据。 
+3. （可选）有必要的时候可以创建`SetUp()`和`TearDown()`对每个测试用例构建和释放资源。
+
+当使用`test fixtures`时，需要使用`TEST_F`才可以访问`test fixture`中的变量和方法（使用之前必须先定义）。使用`TEST_F`的第一个参数必须是`fixture class`，这也是其中F的含义。
+每个`TEST_F`用到的数据都是经过`SetUp()`创建过的。每个`test case`结束之后，对应的`test fixture`会被删除掉。具体的过程：
+
+1. 构造`OneTest`的`test fixture`
+2. 运行`SetUp()`初始化
+3. 测试当前用例
+4. 运行`TearDown()`释放`test fixture`中的资源。
+5. 销毁`test fixture`
+6. 继续下一个`OneTest`测试。
+
+### ASSERT_ & ECXEPT_
+`EXCEPT_*`可以在断言失败之后显示更详细的信息。
+`ASSERT_`用于必须要满足的条件，如果这个条件不满足则停止测试。
+
 
 
 
