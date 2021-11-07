@@ -10,8 +10,8 @@ bool OnTheFlyPrimeTable::isPrime(int n) {
         return false;
     }
 
-    for (int i = 0; i < std::sqrt(n); ++i) {
-        if (n % i == 0)
+    for (int i = 2; i <= std::sqrt(n); ++i) {
+        if ((n % i) == 0)
             return false;
     }
     return true;

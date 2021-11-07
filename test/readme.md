@@ -74,6 +74,7 @@ TEST_P(TestFixtureName, TestName) {
 `simple tests`可以直接使用`TEST()`宏创建，`GTEST`按照`suite_name`对测试分组，因此相同单元的测试的`suite_name`应当相同。同时创建时要注意`test_suite_name`和`test_name`不能包含下划线。
 
 ### test fixtures
+#### 创建和运行
 `test fixture`可以避免多次执行相同的操作或者创建相同的数据，创建`test fixture`可以分为以下步骤：
 1. 以`public`方式继承`::testing::Test`类，同时类内成员应当声明为`protected`，以便于访问其中的成员变量。
 2. 声明需要创建的数据。 
@@ -89,9 +90,99 @@ TEST_P(TestFixtureName, TestName) {
 5. 销毁`test fixture`
 6. 继续下一个`OneTest`测试。
 
+
+#### quick test
+`gtest`可以使用`test fixtures`构建包含用时的测试用例。
+
+```cpp
+class QuickTest : public testing::Test {
+private:
+    std::chrono::high_resolution_clock::time_point start_time_;
+
+protected:
+
+    void SetUp() override {
+        start_time_ = std::chrono::high_resolution_clock::now();
+    }
+
+    void TearDown() override {
+        using namespace std::literals;
+//        usleep(std::chrono::duration_cast<std::chrono::microseconds>(5ms).count());
+//        usleep((5000ns).count());
+        std::chrono::high_resolution_clock::time_point finish_time =
+                std::chrono::high_resolution_clock::now();
+        auto cost = finish_time - start_time_;
+//        auto limit = std::chrono::milliseconds(5);
+        EXPECT_LE(cost, 5ms)
+                            << fmt::format("cost too long, execute time: {}\n", cost);
+    }
+};
+```
+
+
+
+### 接口测试
+
+接口测试可以用于测试公共方法的不同实现。构建接口测试时首先要创建一些工厂函数，然后定义使用类模板定义`test fixture`。最后使用公共的接口测试所有实现。
+`gtest`提供了2中不同的方法可以测试接口对应的实现。
+
+#### typed tests
+当已经知道接口所有实现之后，可以使用这种方式。首先声明并指定类型参数，然后时使用`TYPED_TEST`构建测试用例，`gtest`会自动为`TypeList`中每个具体的实现构建测试，不需要用户重复构建测试用例。
+
+```cpp
+// TestCaseName 必须是fixture name
+// TYPED_TEST_SUITE(TestCaseName, TypeList);
+
+// The list of types we want to test.
+typedef Types<OnTheFlyPrimeTable, PreCalculatedPrimeTable> Implementations;
+
+TYPED_TEST_SUITE(PrimeTableTest, Implementations);
+
+// Then use TYPED_TEST(TestCaseName, TestName) to define a typed test,
+```
+
+
+#### type-parameterized
+这种构建方式比较负责，但是可以适应更多的场景，复用性更好。
+当无法获知接口有多少具体的实现方式时（比如你是接口的提供者，但不负责具体实现），可以使用`type-parameterized`构建测试用例。
+1. 声明`test fixture`的模板类。
+2. 使用`YPED_TEST_SUITE_P(parma)`完成定义，参数名是`test fixture name`。The _P suffix is for "parameterized" or "pattern".
+3. 使用`TYPED_TEST_P(TestCaseName, TestName)`构建测试用例。
+4. 枚举测试用例。
+5. 添加需要运行的测试具体类型（可以定义在一个.h文件中，可以在`TYPED_TEST_P`之后定义）
+```cpp
+template <class T>
+class PrimeTableTest2 : public PrimeTableTest<T> {
+};
+
+TYPED_TEST_SUITE_P(PrimeTableTest2);
+
+
+TYPED_TEST_P(PrimeTableTest2, some_case) {
+}
+
+
+// you have to enumerate the tests you defined:
+REGISTER_TYPED_TEST_SUITE_P(
+    PrimeTableTest2,  // The first argument is the test case name.
+    // The rest of the arguments are the test names.
+    ReturnsFalseForNonPrimes, ReturnsTrueForPrimes, CanGetNextPrime);
+
+typedef Types<OnTheFlyPrimeTable, PreCalculatedPrimeTable>
+    PrimeTableImplementations;
+INSTANTIATE_TYPED_TEST_SUITE_P(OnTheFlyAndPreCalculated,    // Instance name
+                               PrimeTableTest2,             // Test case name
+                               PrimeTableImplementations);  // Type list
+
+```
+
 ### ASSERT_ & ECXEPT_
 `EXCEPT_*`可以在断言失败之后显示更详细的信息。
 `ASSERT_`用于必须要满足的条件，如果这个条件不满足则停止测试。
+
+
+
+
 
 
 
