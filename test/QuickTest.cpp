@@ -16,7 +16,7 @@
  */
 
 
-class QuickTest: public testing::Test {
+class QuickTest : public testing::Test {
 private:
     std::chrono::high_resolution_clock::time_point start_time_;
 
@@ -29,17 +29,17 @@ protected:
     void TearDown() override {
         using namespace std::literals;
 //        usleep(std::chrono::duration_cast<std::chrono::microseconds>(5ms).count());
-        usleep((5000ns).count());
+//        usleep((5000ns).count());
         std::chrono::high_resolution_clock::time_point finish_time =
                 std::chrono::high_resolution_clock::now();
         auto cost = finish_time - start_time_;
 //        auto limit = std::chrono::milliseconds(5);
         EXPECT_LE(cost, 5ms)
-            << fmt::format("cost too long, execute time: {}\n", cost);
+                            << fmt::format("cost too long, execute time: {}\n", cost);
     }
 };
 
-class IntegerFunctionTest: public QuickTest {
+class IntegerFunctionTest : public QuickTest {
 
 };
 
@@ -113,7 +113,7 @@ TEST_F(QueueQuickTest, defaultConstructorQuick) {
 }
 
 TEST_F(QueueQuickTest, dequeueQuick) {
-    int* n = q0_.dequeue();
+    int *n = q0_.dequeue();
     EXPECT_TRUE(n == nullptr);
 
     n = q1_.dequeue();
