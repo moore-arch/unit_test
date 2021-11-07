@@ -59,7 +59,3 @@ TEST(IsPrimeTest, Positive) {
     EXPECT_TRUE(Tools::isPrime(23));
 }
 
-TEST_F(FactorialTest_Positive_Test, h) {
-    EXPECT_FALSE(Tools::isPrime(4));
-
-}

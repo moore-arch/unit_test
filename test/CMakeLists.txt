@@ -10,9 +10,13 @@ FILE(GLOB SRCS ../src/*.cpp)
 list(FILTER SRCS EXCLUDE REGEX ".*main\\.cpp$")
 FILE(GLOB TEST_SRCS *.cpp)
 
+set(IMPL_SRCS ../src/QueueImpl.h)
+
+message(srcs ******* ${SRCS} *******)
+
 #set(SRC ../src/Tools.cpp)
 #set(TEST_SRC TestMain.cpp ToolsTest.cpp UtilityTest.cpp)
 
-add_executable(unit_test ${SRCS} ${TEST_SRCS})
+add_executable(unit_test ${TEST_SRCS}  ${SRCS} ${IMPL_SRCS})
 #add_executable(unit_test TestMain.cpp ToolsTest.cpp UtilityTest.cpp ../src/Tools.cpp )
 target_link_libraries(unit_test gtest fmt)
