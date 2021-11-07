@@ -114,7 +114,7 @@ public:
         Queue* new_queue = new Queue();
         for (const Node<E>* node = head_; node != nullptr;
              node = node->next_) {
-            new_queue->Enqueue(function(node->element()));
+            new_queue->enqueue(function(node->element()));
         }
 
         return new_queue;
