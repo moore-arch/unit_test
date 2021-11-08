@@ -2,11 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 project(unit_test)
 
 set(CMAKE_CXX_STANDARD 20)
-
-find_package(fmt)
-
 FILE(GLOB SRCS ../src/*.cpp)
-#list(REMOVE_ITEM SRCS "*main.cpp")
 list(FILTER SRCS EXCLUDE REGEX ".*main\\.cpp$")
 FILE(GLOB TEST_SRCS *.cpp)
 
