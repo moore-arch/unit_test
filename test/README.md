@@ -62,11 +62,15 @@ TEST_F(TestFixtureName, TestName) {
 
 `TEST_P()` is useful when you want to write tests with a parameter. Instead of writing multiple tests with different values of the parameter,
 you can write one test using `TEST_P()` which uses `GetParam()` and can be instantiated using `INSTANTIATE_TEST_SUITE_P()`.
+简而言之，就是可以对一个测试语句传入不同的参数，从而运行多次。
 ```cpp
+// EXPECT_TRUE运行多次，GetParam()每次从参数列表中取一个值
 TEST_P(TestFixtureName, TestName) {
   ... statements ...
   EXPECT_TRUE(DoSomething(GetParam()));
 }
+
+INSTANTIATE_TEST_CASE_P(TestName, IsPrimeParamTest, testing::Values(3, 5, 11, 23, 17));
 ```
 
 
@@ -129,6 +133,8 @@ protected:
 #### typed tests
 当已经知道接口所有实现之后，可以使用这种方式。首先声明并指定类型参数，然后时使用`TYPED_TEST`构建测试用例，`gtest`会自动为`TypeList`中每个具体的实现构建测试，不需要用户重复构建测试用例。
 
+// https://www.cnblogs.com/coderzh/archive/2009/04/08/1431297.html
+
 ```cpp
 // TestCaseName 必须是fixture name
 // TYPED_TEST_SUITE(TestCaseName, TypeList);
@@ -143,7 +149,7 @@ TYPED_TEST_SUITE(PrimeTableTest, Implementations);
 
 
 #### type-parameterized
-这种构建方式比较负责，但是可以适应更多的场景，复用性更好。
+这种构建方式比较复杂，但是可以适应更多的场景，复用性更好。
 当无法获知接口有多少具体的实现方式时（比如你是接口的提供者，但不负责具体实现），可以使用`type-parameterized`构建测试用例。
 1. 声明`test fixture`的模板类。
 2. 使用`YPED_TEST_SUITE_P(parma)`完成定义，参数名是`test fixture name`。The _P suffix is for "parameterized" or "pattern".
@@ -173,25 +179,50 @@ typedef Types<OnTheFlyPrimeTable, PreCalculatedPrimeTable>
 INSTANTIATE_TYPED_TEST_SUITE_P(OnTheFlyAndPreCalculated,    // Instance name
                                PrimeTableTest2,             // Test case name
                                PrimeTableImplementations);  // Type list
-
 ```
 
-### ASSERT_ & ECXEPT_
-`EXCEPT_*`可以在断言失败之后显示更详细的信息。
-`ASSERT_`用于必须要满足的条件，如果这个条件不满足则停止测试。
+
+### 参数化
 
 
+### ASSERT_ & EXPECT_
+
+`EXCEPT_*`可以在断言失败之后显示更详细的信息（可以使用`<<`操作符输出自定义的信息），当检查点失败时，继续往下执行。
+包含`EXPECT_EQ, EXPECT_LE, ASSERT_DOUBLE_EQ, EXPECT_STREQ, EXPECT_THROW, EXPECT_ANY_THROW....`
+`ASSERT_PRED(n)`:可以在调用返回false的时候打印出传入的参数，帮助定位问题。
+`ASSERT_PRED_FORMAT(n)`:类似于`ASSERT_PRED(n)`，但可以自定义输出格式；
 
 
+```cpp
+// 打印调用时传入的参数
+EXPECT_PRED2(TestFunction, m, n);
 
 
+// 自定义输出信息，也许可以直接使用fmt输出
+testing::AssertionResult AssertFoo(const char* m_expr, const char* n_expr, const char* k_expr, int m, int n, int k) {
+    if (Foo(m, n) == k)
+        return testing::AssertionSuccess();
+    testing::Message msg;
+    msg << m_expr << " 和 " << n_expr << " 的最大公约数应该是：" << Foo(m, n) << " 而不是：" << k_expr;
+    return testing::AssertionFailure(msg);
+}
 
+TEST(AssertFooTest, HandleFail)
+{
+    EXPECT_PRED_FORMAT3(AssertFoo, 3, 6, 2);
+}
+```
+`ASSERT_*`用于必须要满足的条件，当检查点失败时，退出当前函数（注意：并非退出当前案例）。
+
+
+## 事件机制
 
 “事件” 本质是框架给你提供了一个机会, 让你能在这样的几个机会来执行你自己定制的代码, 来给测试用例准备/清理数据。gtest提供了多种事件机制，总结一下gtest的事件一共有三种：
 
 1、TestSuite事件
 
 需要写一个类，继承testing::Test，然后实现两个静态方法：SetUpTestCase 方法在第一个TestCase之前执行；TearDownTestCase方法在最后一个TestCase之后执行。
+这个类是`TEST_F`的第一个参数。
 
 2、TestCase事件
 
@@ -199,8 +230,17 @@ INSTANTIATE_TYPED_TEST_SUITE_P(OnTheFlyAndPreCalculated,    // Instance name
 
 3、全局事件
 
-要实现全局事件，必须写一个类，继承testing::Environment类，实现里面的SetUp和TearDown方法。SetUp方法在所有案例执行前执行；TearDown方法在所有案例执行后执行。
-
+要实现全局事件，必须写一个类，继承testing::Environment类，实现里面的SetUp和TearDown方法。SetUp方法在所有测试执行前执行；TearDown方法在所有测试执行后执行。
+在main函数中通过testing::AddGlobalTestEnvironment方法将事件挂进来。
+```cpp
+// 待验证
+int _tmain(int argc, _TCHAR* argv[])
+{
+    testing::AddGlobalTestEnvironment(new FooEnvironment);
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
+```
 
 
 
